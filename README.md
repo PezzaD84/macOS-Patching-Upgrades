@@ -14,3 +14,8 @@ M1 devices will download the latest version of macOS using the softwareupdate co
 
 If the user is not a local admin then the user will be prompted for the password of the local admin account to run the upgrade. 
 There is an extra part of the script which can elevate the user to an admin to carry out the upgrade and then an extra script can be added after the upgrade is complete to demote the user back to a standard user.
+
+There are 2 versions of the script with different ways to enable the elevate user function. One script uses a switch and the other needs the elevate functions unhashed.
+
+The switch version will run with -e added after the script.
+The other version will need line 35 unhashed.

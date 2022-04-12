@@ -14,6 +14,10 @@ Notify=/Library/Application\ Support/JAMF/bin/jamfHelper.app/Contents/MacOS/jamf
 
 user=$(ls -l /dev/console | awk '{ print $3 }')
 
+min_drive_space=45
+
+free_disk_space=$(osascript -l 'JavaScript' -e "ObjC.import('Foundation'); var freeSpaceBytesRef=Ref(); $.NSURL.fileURLWithPath('/').getResourceValueForKeyError(freeSpaceBytesRef, 'NSURLVolumeAvailableCapacityForImportantUsageKey', null); Math.round(ObjC.unwrap(freeSpaceBytesRef[0]) / 1000000000)")  # with thanks to Pico
+
 #################################################################
 # Elevate user to admin # To use this feature use the switch -e #
 #################################################################	
@@ -43,6 +47,20 @@ while getopts ":e" option; do
 			exit 1;;
 	esac
 done
+
+# Free space check
+
+if [[ ! "$free_disk_space" ]]; then
+	# fall back to df -h if the above fails
+	free_disk_space=$(df -Pk . | column -t | sed 1d | awk '{print $4}')
+fi
+
+if [[ $free_disk_space -ge $min_drive_space ]]; then
+	echo "OK - $free_disk_space GB free/purgeable disk space detected"
+else
+	echo "ERROR - $free_disk_space GB free/purgeable disk space detected"
+	exit 1
+fi
 
 # Check and Download macOS
 

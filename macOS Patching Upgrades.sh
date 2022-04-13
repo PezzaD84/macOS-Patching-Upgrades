@@ -118,7 +118,7 @@ sleep 5
 	
 	OSInstaller=$(ls /Applications/ | grep -i 'install macOS' )
 	
-	"/Applications/$OSInstaller/Contents/Resources/startosinstall" --agreetolicense --forcequitapps --user $adminuser --stdinpass $adminpswd
+	"/Applications/$OSInstaller/Contents/Resources/startosinstall" --agreetolicense --force --user $adminuser --stdinpass $adminpswd
 else
 	echo "Mac is Intel so things are simple from here!!!"
 
@@ -128,6 +128,6 @@ sleep 5
 	
 	OSInstaller=$(ls /Applications/ | grep -i 'install macOS' )
 	
-	"/Applications/$OSInstaller/Contents/Resources/startosinstall" --agreetolicense --forcequitapps
+	"/Applications/$OSInstaller/Contents/Resources/startosinstall" --agreetolicense --force
 fi
 		

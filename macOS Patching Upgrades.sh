@@ -53,14 +53,15 @@ else
 fi
 
 # Check and Download macOS
+OScheck=$(ls /Applications/ | grep macOS)
 
-if [[ -f /Applications/Install\ macOS\ Monterey.app/Contents/Info.plist ]];then
-	echo "macOS installer already downloaded"
-else
+if [[ $OScheck == "" ]]; then
 	echo "No installer found. Downloading now"
 	
-softwareupdate -d --fetch-full-installer --full-installer-version $Latest
-
+	softwareupdate -d --fetch-full-installer --full-installer-version $Latest
+	
+else
+	echo "macOS installer already downloaded"
 fi
 
 sleep 5

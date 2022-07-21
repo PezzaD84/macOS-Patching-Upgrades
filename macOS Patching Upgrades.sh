@@ -66,8 +66,14 @@ fi
 
 sleep 5
 
-# Notify Users that a MacOS Upgrade is available
+# Upgrade available and Deferment notification
 
+day1=/var/tmp/postponed.txt
+day2=/var/tmp/postponed2.txt
+day3=/var/tmp/postponed3.txt
+day4=/var/tmp/postponed4.txt
+
+deferment(){
 message=$("$Notify" \
 -windowType hud \
 -lockHUD \
@@ -84,10 +90,49 @@ Your device will reboot by itself once completed." \
 
 if [[ $message == 0 ]]; then
 	echo "User agreed to install macOS upgrade"
-else
-	echo "User postponed the macOS upgrade"
-	exit 1
+	rm $day1
+	rm $day2
+	rm $day3
+	rm $day4
+elif [[ ! -f $day1 ]]; then
+	echo "User postponed the macOS upgrade 1st Day" > $day1
+	echo "User postponed the macOS upgrade 1st Day"
+	exit 0
+elif [[ -f $day1 ]] && [[ ! -f $day2 ]]; then
+	echo "User postponed the macOS upgrade 2nd Day" > $day2
+	echo "User postponed the macOS upgrade 2nd Day"
+	exit 0
+elif [[ -f $day1 ]] && [[ -f $day2 ]] && [[ ! -f $day3 ]]; then
+	echo "User postponed the macOS upgrade 3rd Day" > $day3
+	echo "User postponed the macOS upgrade 3rd Day"
+	exit 0
+elif [[ -f $day1 ]] && [[ -f $day2 ]] && [[ -f $day3 ]] && [[ ! -f $day4 ]]; then
+	echo "User postponed the macOS upgrade 4th Day" > $day4
+	echo "User postponed the macOS upgrade 4th Day"
+	exit 0
+elif [[ -f $day4 ]]; then
+	message=$("$Notify" \
+-windowType hud \
+-lockHUD \
+-title "MacOS Upgrade" \
+-heading "MacOS Upgrade Available" \
+-description "Update postponement has passed 4 days.
+Your device will now be updated.
+
+This process can take 20-40min so please do not turn off your device during this time.
+Your device will reboot by itself once completed." \
+-icon /System/Library/PreferencePanes/SoftwareUpdate.prefPane/Contents/Resources/SoftwareUpdate.icns \
+-button1 "Install now" \
+-defaultButton 1 \
+)
+	rm $day1
+	rm $day2
+	rm $day3
+	rm $day4
 fi
+}
+
+deferment
 
 sleep 5
 

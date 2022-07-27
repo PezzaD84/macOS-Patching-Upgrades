@@ -57,7 +57,8 @@ OScheck=$(ls /Applications/ | grep macOS)
 
 if [[ $OScheck == "" ]]; then
 	echo "No installer found. Downloading now"
-	
+	sudo launchctl kickstart -k system/com.apple.softwareupdated
+	sleep 5
 	softwareupdate -d --fetch-full-installer --full-installer-version $Latest
 	
 else

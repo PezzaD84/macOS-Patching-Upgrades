@@ -4,7 +4,7 @@ Script for handling macOS major version Upgrades on Intel and M1 macs
 
 This script will look online for the latest version of macOS and download the installer and then upgrade the device. This only works on 10.15 and newer.
 
-Update: A 4 day deferment/postponement has been added to the script to allow users to defer a mojor upgrade for 4 days. After 4 days the upgrade will be forced to run.
+Update: A 4 day deferment/postponement has been added to the script to allow users to defer a major upgrade for 4 days. After 4 days the upgrade will be forced to run.
 
 # Intel MacOS Upgrade
 

@@ -112,7 +112,7 @@ elif [[ -f $day1 ]] && [[ -f $day2 ]] && [[ -f $day3 ]] && [[ ! -f $day4 ]]; the
 	echo "User postponed the macOS upgrade 4th Day"
 	exit 0
 elif [[ -f $day4 ]]; then
-	message=$("$Notify" \
+message=$("$Notify" \
 -windowType hud \
 -lockHUD \
 -title "MacOS Upgrade" \

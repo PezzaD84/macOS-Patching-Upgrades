@@ -19,7 +19,7 @@ min_drive_space=45
 free_disk_space=$(osascript -l 'JavaScript' -e "ObjC.import('Foundation'); var freeSpaceBytesRef=Ref(); $.NSURL.fileURLWithPath('/').getResourceValueForKeyError(freeSpaceBytesRef, 'NSURLVolumeAvailableCapacityForImportantUsageKey', null); Math.round(ObjC.unwrap(freeSpaceBytesRef[0]) / 1000000000)")  # with thanks to Pico
 
 ##############################################################
-# Elevate user to admin # To use this feature unhash line 35 #
+# Elevate user to admin # To use this feature unhash line 39 #
 ##############################################################	
 
 elevate(){

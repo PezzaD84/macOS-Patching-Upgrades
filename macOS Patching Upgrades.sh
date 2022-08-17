@@ -150,13 +150,13 @@ if [[ $processor == arm64 ]]; then
 		echo "$user is admin"
 	adminuser=$user
 	
-	adminpswd=$(osascript -e 'Tell application "System Events" to display dialog "To install the available macOS upgrade please enter your password" with title "macOS Upgrade" with icon alias "System:Applications:Utilities:Keychain Access.app:Contents:Resources:AppIcon.icns" with hidden answer default answer ""' -e 'text returned of result' 2>/dev/null)
+	adminpswd=$(osascript -e 'Tell application "System Events" to display dialog "To install the available macOS upgrade please enter your password" buttons {"Continue"} default button 1 with title "macOS Upgrade" with icon alias "System:Applications:Utilities:Keychain Access.app:Contents:Resources:AppIcon.icns" with hidden answer default answer ""' -e 'text returned of result' 2>/dev/null)
 	
 	else
 		echo "$user is not admin"
 	adminuser=$(dscl . list /Users UniqueID | grep 501 | awk '{print $1}')
 	
-	adminpswd=$(osascript -e 'Tell application "System Events" to display dialog "To install the available macOS upgrade please enter the password for user '$adminuser'" with title "macOS Upgrade" with icon alias "System:Applications:Utilities:Keychain Access.app:Contents:Resources:AppIcon.icns" with hidden answer default answer ""' -e 'text returned of result' 2>/dev/null)
+	adminpswd=$(osascript -e 'Tell application "System Events" to display dialog "To install the available macOS upgrade please enter the password for user '$adminuser'" buttons {"Continue"} default button 1 with title "macOS Upgrade" with icon alias "System:Applications:Utilities:Keychain Access.app:Contents:Resources:AppIcon.icns" with hidden answer default answer ""' -e 'text returned of result' 2>/dev/null)
 	fi
 	
 sleep 5

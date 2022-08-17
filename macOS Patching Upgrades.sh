@@ -165,7 +165,7 @@ sleep 5
 	
 	OSInstaller=$(ls /Applications/ | grep -i 'install macOS' )
 	
-	"/Applications/$OSInstaller/Contents/Resources/startosinstall" --agreetolicense --force --user $adminuser --stdinpass $adminpswd
+	echo $adminpswd | "/Applications/$OSInstaller/Contents/Resources/startosinstall" --agreetolicense --force --user $adminuser --stdinpass
 else
 	echo "Mac is Intel so things are simple from here!!!"
 

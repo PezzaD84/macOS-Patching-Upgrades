@@ -10,7 +10,7 @@
 # Variables
 ##############################################################
 
-Latest=$(curl https://en.wikipedia.org/wiki/MacOS | grep 'Latest release' | tr '<' '\n' | grep 'infobox-data' | sed -n 5p | sed -e 's#td class="infobox-data">##' | xargs)
+Latest=$(curl https://en.wikipedia.org/wiki/MacOS | grep 'Latest release' | tr '<' '\n' | grep 'infobox-data' | sed -n 4p | sed -e 's#td class="infobox-data">##' | xargs)
 
 processor=$(uname -m)
 
@@ -58,6 +58,43 @@ else
 fi
 
 ##############################################################
+# Check if MIST is installed
+##############################################################
+
+if ! command -v mist &> /dev/null
+then
+	echo "Mist is not installed. App will be installed now....."
+	sleep 2
+	
+	# Variables
+	pkgfile="MIST.pkg"
+	logfile="/Library/Logs/MISTInstallScript.log"
+	version=$(curl -s https://github.com/ninxsoft/mist-cli | grep releases/tag | tr '/' ' ' | awk '{print $12}' | tr -d '"''>''v')
+	url="https://github.com/ninxsoft/mist-cli/releases/download/v$version/mist-cli.$version.pkg"
+	
+	# Start Log entries
+	echo "--" >> ${logfile}
+	echo "`date`: Downloading latest version." >> ${logfile}
+	
+	# Download installer
+	curl -L -J -o /tmp/${pkgfile} ${url}
+	echo "`date`: Installing..." >> ${logfile}
+	
+	# Change to installer directory
+	cd /tmp
+	
+	# Install application
+	sudo installer -pkg ${pkgfile} -target /
+	sleep 5
+	echo "`date`: Deleting package installer." >> ${logfile}
+	
+	# Remove downloaded installer
+	rm /tmp/"${pkgfile}"
+else
+	echo "MIST is installed. Continuing macOS Upgrade....."
+fi
+
+##############################################################
 # Check and Download macOS
 ##############################################################
 
@@ -65,10 +102,23 @@ OScheck=$(ls /Applications/ | grep macOS)
 
 if [[ $OScheck == "" ]]; then
 	echo "No installer found. Downloading now"
+    
+	"$Notify" \
+	-windowType hud \
+	-lockHUD \
+	-title "MacOS Upgrade" \
+	-heading "MacOS Upgrade Downloading" \
+	-description "A macOS upgrade is available to Download.
+This process can take 20-60min so please do not turn off your device during this time.
+Your device will continue the upgrade once the new OS has downloaded." \
+	-icon /System/Library/PreferencePanes/SoftwareUpdate.prefPane/Contents/Resources/SoftwareUpdate.icns &
+	
 	sudo launchctl kickstart -k system/com.apple.softwareupdated
 	sleep 5
-	softwareupdate -d --fetch-full-installer --full-installer-version $Latest
+	
+	sudo mist download installer "$Latest" application --output-directory "/Applications/" --quiet
 
+	killall jamfHelper
 else
 	echo "macOS installer already downloaded"
 fi
@@ -163,28 +213,42 @@ if [[ $processor == arm64 ]]; then
 	adminuser=$user
 	
 	adminpswd=$(osascript -e 'Tell application "System Events" to display dialog "To install the available macOS upgrade please enter your password" buttons {"Continue"} default button 1 with title "macOS Upgrade" with icon alias "System:Applications:Utilities:Keychain Access.app:Contents:Resources:AppIcon.icns" with hidden answer default answer ""' -e 'text returned of result' 2>/dev/null)
+		
+		pswdCheck=$(dscl /Local/Default -authonly $user $adminPswd)
+		
+		until [[ $pswdCheck == "" ]]
+		do
+			echo "Password was incorrect"
+			adminPswd=$(osascript -e 'Tell application "System Events" to display dialog "Password was incorrect. Please try again." buttons {"Continue"} default button 1 with title "macOS Upgrade" with icon alias "System:Applications:Utilities:Keychain Access.app:Contents:Resources:AppIcon.icns" with hidden answer default answer ""' -e 'text returned of result' 2>/dev/null)
+			
+			pswdCheck=$(dscl /Local/Default -authonly $user $adminPswd)
+			echo $pswdCheck
+		done
+		
+		echo "Password Validation passed. Continuing Updates....."
+		sleep 5
 	else
 		echo "$user is not admin. Elevating user account....."
-		elevate 
 		
-	adminuser=$user
-	
-	adminpswd=$(osascript -e 'Tell application "System Events" to display dialog "To install the available macOS upgrade please enter your password" buttons {"Continue"} default button 1 with title "macOS Upgrade" with icon alias "System:Applications:Utilities:Keychain Access.app:Contents:Resources:AppIcon.icns" with hidden answer default answer ""' -e 'text returned of result' 2>/dev/null)
-	
-	# Create plist to remove admin at next login
-	
 		# Create directory and removal script 
 		
 		mkdir -p /Library/.TRAMS/Scripts/
-		
+		sleep 2
+        
 		cat << EOF > /Library/.TRAMS/Scripts/RemoveAdmin.sh
 #!/bin/bash
 
 dseditgroup -o edit -d $user -t user admin
 EOF
 		
-		chown root:wheel /Library/.TRAMS/Scripts/RemoveAdmin.sh
-		chmod 755 /Library/.TRAMS/Scripts/RemoveAdmin.sh
+		if [[ -f /Library/.TRAMS/Scripts/RemoveAdmin.sh ]]; then
+			echo "Admin removal script setup ok."
+			chown root:wheel /Library/.TRAMS/Scripts/RemoveAdmin.sh
+			chmod 755 /Library/.TRAMS/Scripts/RemoveAdmin.sh
+		else
+			echo "Admin removal script setup failed."
+			exit 1 
+		fi
 		
 		# Create plist to remove admin at next login
 		
@@ -205,15 +269,54 @@ EOF
 </plist>
 EOF
 		
-		# Permission plist
-		chown root:wheel /Library/LaunchDaemons/com.Trams.adminremove.plist
-		chmod 644 /Library/LaunchDaemons/com.Trams.adminremove.plist
+# Permission plist
+		
+		if [[ -f /Library/LaunchDaemons/com.Trams.adminremove.plist ]]; then
+			echo "Admin removal LaunchDaemon setup ok."
+			chown root:wheel /Library/LaunchDaemons/com.Trams.adminremove.plist
+			chmod 644 /Library/LaunchDaemons/com.Trams.adminremove.plist
+			
+		else
+			echo "Admin removal LaunchDaemon setup failed."
+			exit 1 
+		fi
 		
 	fi
-	
+		
+elevate 
+		
 sleep 5
 		
+adminuser=$user
+	
+adminpswd=$(osascript -e 'Tell application "System Events" to display dialog "To install the available macOS upgrade please enter your password" buttons {"Continue"} default button 1 with title "macOS Upgrade" with icon alias "System:Applications:Utilities:Keychain Access.app:Contents:Resources:AppIcon.icns" with hidden answer default answer ""' -e 'text returned of result' 2>/dev/null)
+	
+pswdCheck=$(dscl /Local/Default -authonly $user $adminPswd)
+		
+	until [[ $pswdCheck == "" ]]
+		do
+			echo "Password was incorrect"
+			adminPswd=$(osascript -e 'Tell application "System Events" to display dialog "Password was incorrect. Please try again." buttons {"Continue"} default button 1 with title "macOS Upgrade" with icon alias "System:Applications:Utilities:Keychain Access.app:Contents:Resources:AppIcon.icns" with hidden answer default answer ""' -e 'text returned of result' 2>/dev/null)
+			
+			pswdCheck=$(dscl /Local/Default -authonly $user $adminPswd)
+			echo $pswdCheck
+		done
+		
+		echo "Password Validation passed. Continuing Updates....."
+		sleep 5
+
+		
 	# Install macOS
+	
+	"$Notify" \
+	-windowType hud \
+	-lockHUD \
+	-title "MacOS Upgrade" \
+	-heading "MacOS Upgrade Installing" \
+	-description "A macOS upgrade is now being Installed.
+This process can take 20-60min so please do not turn off your device during this time.
+Your device will Reboot automatically to finish off the install so please make sure any open work is saved." \
+	-icon /System/Library/PreferencePanes/SoftwareUpdate.prefPane/Contents/Resources/SoftwareUpdate.icns &
 	
 	OSInstaller=$(ls /Applications/ | grep -i 'install macOS' )
 	
@@ -224,6 +327,16 @@ else
 sleep 5
 	
 	# Install macOS
+	
+	"$Notify" \
+	-windowType hud \
+	-lockHUD \
+	-title "MacOS Upgrade" \
+	-heading "MacOS Upgrade Installing" \
+	-description "A macOS upgrade is now being Installed.
+This process can take 20-60min so please do not turn off your device during this time.
+Your device will Reboot automatically to finish off the install so please make sure any open work is saved." \
+	-icon /System/Library/PreferencePanes/SoftwareUpdate.prefPane/Contents/Resources/SoftwareUpdate.icns &
 	
 	OSInstaller=$(ls /Applications/ | grep -i 'install macOS' )
 	

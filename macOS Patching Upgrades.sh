@@ -95,37 +95,6 @@ else
 fi
 
 ##############################################################
-# Check and Download macOS
-##############################################################
-
-OScheck=$(ls /Applications/ | grep macOS)
-
-if [[ $OScheck == "" ]]; then
-	echo "No installer found. Downloading now"
-    
-	"$Notify" \
-	-windowType hud \
-	-lockHUD \
-	-title "MacOS Upgrade" \
-	-heading "MacOS Upgrade Downloading" \
-	-description "A macOS upgrade is available to Download.
-This process can take 20-60min so please do not turn off your device during this time.
-Your device will continue the upgrade once the new OS has downloaded." \
-	-icon /System/Library/PreferencePanes/SoftwareUpdate.prefPane/Contents/Resources/SoftwareUpdate.icns &
-	
-	sudo launchctl kickstart -k system/com.apple.softwareupdated
-	sleep 5
-	
-	sudo mist download installer "$Latest" application --output-directory "/Applications/" --quiet
-
-	killall jamfHelper
-else
-	echo "macOS installer already downloaded"
-fi
-
-sleep 5
-
-##############################################################
 # Upgrade available and Deferment notification
 ##############################################################
 
@@ -140,7 +109,7 @@ message=$("$Notify" \
 -lockHUD \
 -title "MacOS Upgrade" \
 -heading "MacOS Upgrade Available" \
--description "A macOS upgrade is available to install.
+-description "A macOS upgrade is available.
 This process can take 20-60min so please do not turn off your device during this time.
 Your device will reboot by itself once completed." \
 -icon /System/Library/PreferencePanes/SoftwareUpdate.prefPane/Contents/Resources/SoftwareUpdate.icns \
@@ -196,6 +165,67 @@ fi
 deferment
 
 sleep 5
+
+##############################################################
+# Check and Download macOS
+##############################################################
+
+OScheck=$(ls /Applications/ | grep macOS)
+
+if [[ $OScheck == "" ]]; then
+	echo "No installer found. Downloading now"
+    
+	"$Notify" \
+	-windowType hud \
+	-lockHUD \
+	-title "MacOS Upgrade" \
+	-heading "MacOS Upgrade Downloading" \
+	-description "A macOS upgrade is available to Download.
+This process can take 20-60min so please do not turn off your device during this time.
+Your device will continue the upgrade once the new OS has downloaded." \
+	-icon /System/Library/PreferencePanes/SoftwareUpdate.prefPane/Contents/Resources/SoftwareUpdate.icns &
+	
+	sudo launchctl kickstart -k system/com.apple.softwareupdated
+	sleep 5
+	
+	sudo mist download installer "$Latest" application --output-directory "/Applications/" --quiet
+
+	killall jamfHelper
+else
+	echo "macOS installer already downloaded"
+fi
+
+sleep 5
+
+##############################################################
+# Check Battery state
+##############################################################
+
+bat=$(pmset -g batt | grep 'AC Power')
+
+model=$(ioreg -l | awk '/product-name/ { split($0, line, "\""); printf("%s\n", line[4]); }')
+
+if [[ "$model" = *"Book"* ]]; then
+	until [[ $bat == "Now drawing from 'AC Power'" ]]; do
+	
+	echo "Device not connected to power source"
+	
+	"$Notify" \
+		-windowType hud \
+		-lockHUD \
+		-title "MacOS Updates" \
+		-heading "Connect Charger" \
+		-description "Please connect your device to a charger to continue installing updates." \
+		-icon /System/Library/CoreServices/CoreTypes.bundle/Contents/Resources/AlertStopIcon.icns \
+		-button1 "Continue" \
+		-defaultButton 1 \
+	
+		bat=$(pmset -g batt | grep 'AC Power')
+		sleep 2
+	done
+fi
+
+echo "Device connected to power source"
 
 ##############################################################
 # Core upgrade script

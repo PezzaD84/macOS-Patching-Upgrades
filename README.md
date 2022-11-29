@@ -6,6 +6,8 @@ This script will look online for the latest version of macOS and download the in
 
 Update: A 4 day deferment/postponement has been added to the script to allow users to defer a major upgrade for 4 days. After 4 days the upgrade will be forced to run.
 
+If you are liking the work then help me stay awake to carry on writing by buying me a coffee ☕️ https://www.buymeacoffee.com/pezza
+
 # Intel MacOS Upgrade
 
 Intel devices will download the latest version of macOS using MIST https://github.com/ninxsoft/mist-cli. Once the OS installer is downloaded the installation will be triggered with the --agreetolicense --forcequitapps switches and the installation will automatically reboot and complete the upgrade.
